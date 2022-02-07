@@ -21,10 +21,8 @@ defmodule Helloworld.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:protobuf, "~> 0.8.0"},
-      {:arctic_client, path: "/Users/milad/dev/arctic-grpc/arctic_client"},
-      {:arctic_client_mint_adapter,
-       path: "/Users/milad/dev/arctic-grpc/arctic_client_mint_adapter"}
+      {:arctic_client, path: "../../../"},
+      {:arctic_client_mint_adapter, "0.1.0"}
     ]
   end
 end
