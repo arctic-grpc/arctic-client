@@ -1,6 +1,4 @@
 defmodule ArcticClient.Stub do
-  alias ArcticClient.UnaryResponseContext
-
   @doc """
   # ArcticClient.Stub.connect("localhost", 50051, adapter: DemoAdapter)
   """
@@ -15,6 +13,31 @@ defmodule ArcticClient.Stub do
     channel.adapter.module.connect(channel)
   end
 
+  def stream_request(channel, service_name, rpc, request, _opts) do
+    :ok = ArcticBase.Channel.validate_input(channel)
+    :ok = ArcticBase.StubAdapter.validate_input(channel.adapter)
+
+    caller_pid = self()
+    ref = make_ref()
+
+    decoder = fn data ->
+      {:stream, response} = rpc.response
+      decode_stream_data_to_response(data, response)
+    end
+
+    {:ok, stream_reader_pid} =
+      ArcticClient.Stub.StreamReader.start_link([caller_pid, ref, decoder])
+
+    message = Protobuf.Encoder.encode(request)
+
+    stream_request =
+      ArcticBase.StreamRequest.create(service_name, rpc, message, ref, stream_reader_pid)
+
+    with :ok <- channel.adapter.module.request_stream(channel, stream_request) do
+      {:ok, ArcticBase.Stream.new(ref, stream_reader_pid)}
+    end
+  end
+
   @spec unary_request(ArcticBase.Channel.t(), String.t(), ArcticBase.Rpc.t(), struct) ::
           {:ok, struct} | {:error, ArcticBase.RpcError.t()}
   def unary_request(channel, service_name, rpc, request) do
@@ -26,7 +49,7 @@ defmodule ArcticClient.Stub do
     unary_request = ArcticBase.UnaryRequest.create(service_name, rpc, message)
 
     case channel.adapter.module.request(channel, unary_request) do
-      {:ok, response} = ok_resp ->
+      {:ok, response} ->
         # TODO: check done
         with :ok <- validate_status(response),
              :ok <- validate_headers(response) do
@@ -43,6 +66,10 @@ defmodule ArcticClient.Stub do
   defp decode_data_to_response(data, response) do
     # TODO: handle any error?
     message = ArcticBase.Message.from_data(data)
+    {:ok, Protobuf.Decoder.decode(message, response)}
+  end
+
+  defp decode_stream_data_to_response(message, response) do
     {:ok, Protobuf.Decoder.decode(message, response)}
   end
 
