@@ -22,7 +22,8 @@ defmodule Helloworld.MixProject do
   defp deps do
     [
       {:arctic_client, path: "../../../"},
-      {:arctic_client_mint_adapter, "0.1.0"}
+      {:arctic_client_mint_adapter, path: "../../../../arctic_client_mint_adapter/"}
+      # {:arctic_client_mint_adapter, path: "/Users/milad/dev/arctic-grpc/arctic_client_mint_adapter"}
     ]
   end
 end

@@ -2,12 +2,15 @@ defmodule ArcticClient.Stub do
   @doc """
   # ArcticClient.Stub.connect("localhost", 50051, adapter: DemoAdapter)
   """
-  def connect(host, port, opts) do
+  def connect(schema, host, port, opts) do
     channel = %ArcticBase.Channel{
+      schema: schema,
       host: host,
       port: port,
+      schema: schema,
       adapter: %ArcticBase.StubAdapter{module: opts[:adapter]},
-      stub_module: __MODULE__
+      stub_module: __MODULE__,
+      tls_options: opts[:tls_options]
     }
 
     channel.adapter.module.connect(channel)
@@ -33,7 +36,7 @@ defmodule ArcticClient.Stub do
     stream_request =
       ArcticBase.StreamRequest.create(service_name, rpc, message, ref, stream_reader_pid)
 
-    with :ok <- channel.adapter.module.request_stream(channel, stream_request) do
+    with :ok <- channel.adapter.module.request(channel, stream_request) do
       {:ok, ArcticBase.Stream.new(ref, stream_reader_pid)}
     end
   end
