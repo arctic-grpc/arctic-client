@@ -7,10 +7,24 @@ edition = "2021"
 name = "helloworld-server"
 path = "src/server.rs"
 
+[[bin]] # Bin to run the Echo Server with TLS
+name = "helloworld-server-tls"
+path = "src/helloworld-with-tls.rs"
+
+
+
 [dependencies]
-tonic = "0.6"
+tonic = {version = "0.6", features = ["tls"]}
 prost = "0.9"
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "fs"] }
+futures = {version = "0.3", default-features = false, features = ["alloc"]}
+tokio-stream = {version = "0.1", features = ["net"]}
+async-stream = "0.3"
+
+
+rand = "0.8"
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
 
 [build-dependencies]
 tonic-build = "0.6"
